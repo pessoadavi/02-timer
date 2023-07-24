@@ -1,5 +1,4 @@
-import { ButtonVariant } from "./Button.styles";
-import { ButtonContainer } from "./Button.styles";
+import { ButtonContainer, ButtonVariant } from "./Button.styles";
 
 interface ButtonProps {
     variant?: ButtonVariant
