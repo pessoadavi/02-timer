@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Play } from "phosphor-react";
 import * as zod from 'zod'
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CountDownContainer, FormContainer, HomeContainer, MinutesAmountInput, Separator, StartCountDownButton, TaskInput } from "./styles";
+import { differenceInSeconds } from 'date-fns';
 
 
 const newCycleFormValidationSchame = zod.object({
@@ -19,6 +20,7 @@ interface Cycle {
     id: string,
     task: string,
     minutesAmount: number
+    startDate: Date,
 }
 
 export const Home = () => {
@@ -27,10 +29,29 @@ export const Home = () => {
     const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
     const [activeCycleId, setActiveCycleId] = useState<string | null>()
 
-    const { watch, register, handleSubmit, formState, reset } = useForm<NewCycleFormData>({
+    const { watch, register, handleSubmit, reset } = useForm<NewCycleFormData>({
         resolver: zodResolver(newCycleFormValidationSchame),
         defaultValues: { task: '', minutesAmount: 5 }
     })
+
+    const activeCycle = cycles.find(cycle => cycle.id === activeCycleId)
+
+    useEffect(() => {
+        if (activeCycle) {
+            setInterval(() => {
+                setAmountSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate))
+            }, 1000)
+        }
+    }, [activeCycle])
+
+    const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
+    const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
+
+    const secondsAmount = currentSeconds % 60
+    const minutesAmount = Math.floor(currentSeconds / 60)
+
+    const minutes = String(minutesAmount).padStart(2, '0')
+    const seconds = String(secondsAmount).padStart(2, '0')
 
     const handleCreateNewCicle = (data: NewCycleFormData) => {
 
@@ -40,22 +61,13 @@ export const Home = () => {
             id,
             task: data.task,
             minutesAmount: data.minutesAmount,
+            startDate: new Date(),
         }
 
         setActiveCycleId(id)
         setcycles(state => [...state, newCycle])
         reset()
     }
-
-    const activeCycle = cycles.find( cycle => cycle.id === activeCycleId)
-    const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
-    const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
-
-    const secondsAmount = currentSeconds % 60
-    const minutesAmount = Math.floor(currentSeconds / 60)
-
-    const minutes = String(minutesAmount).padStart(2, '0')
-    const seconds = String(secondsAmount).padStart(2, '0')
 
     return (
         <>
